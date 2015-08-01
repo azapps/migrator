@@ -18,13 +18,12 @@ does not store global connections and let you manage them yourself.
 
 ## Installation
 
-Lobos is available through [Clojars](https://clojars.org/).
+Migrator is available through [Clojars](https://clojars.org/).
 
 #### `project.clj`
 ```clojure
-:dependencies [[migrator "1.0.0"]]
+:dependencies [[migrator "0.1.0-SNAPSHOT"]]
 ```
-
 
 ## Usage
 
@@ -32,22 +31,17 @@ Here's a small tutorial on how to use Migrator.
 
 
 ```clj
-(defmigrations user-migrations
-     (defmigration create-users
-       (up (create
-            (table :users
-                   (integer :id :primary-key)
-                   (varchar :name 100)))
-           ["CREATE TABLE \"something-else\";"])
-       (down
-        (drop (table :users))))
-     (defmigration create-comment
-       (up (create
-            (table :comments
-                   (integer :id :primary-key)
-                   (text :comment))))
-       (down
-        (drop (table :comments)))))
+(defmigrations example-migrations
+  [conn]
+  (defmigration user-table
+    (up (mod/create conn (schema/table :users
+                                       (schema/varchar :name 50)
+                                       (schema/varchar :email 50))))
+    (down (mod/drop conn (schema/table :users))))
+  (defmigration another-table
+    (up (mod/create conn (schema/table :tbl
+                                       (schema/integer :foo))))
+    (down (mod/drop conn (schema/table :tbl)))))
 ```
 
 To execute the migrations you can just do:
@@ -57,6 +51,8 @@ To execute the migrations you can just do:
 (rollback db-conn user-migrations) ;; Rollback 1 migration
 (rollback db-conn user-migrations :all) ;; Rollback all migrations
 ```
+
+
 
 ## License
 

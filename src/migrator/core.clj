@@ -1,6 +1,5 @@
 (ns migrator.core
   (:require [clojure.java.jdbc :as jdbc]
-            [migrator.modifiers :as mod]
             [migrator.schema :as schema]))
 
 
@@ -45,8 +44,8 @@
       (not (= 0 (:count (first cnt)))))
     (catch Exception e
       (exec-stmt conn
-                 (mod/create conn (schema/table migration-table
-                                                (schema/varchar :migration 255))))
+                 (schema/create conn (schema/table migration-table
+                                                   (schema/varchar :migration 255))))
       false)))
 
 (defn migrate-1
