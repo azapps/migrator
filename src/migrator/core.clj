@@ -1,5 +1,6 @@
 (ns migrator.core
   (:require [clojure.java.jdbc :as jdbc]
+            [lobos.analyzer :as analyzer]
             [migrator.schema :as schema]))
 
 
@@ -39,10 +40,12 @@
 (defn migration-executed?
   "Checks wether a specific migration was already executed. If no migration-db exists it will be created"
   [conn mname]
-  (try
+  (if (-> (analyzer/analyze-schema conn)
+          :tables
+          (get (keyword migration-table)))    
     (let [cnt (jdbc/query conn [(str "SELECT COUNT(*) AS count FROM " (name migration-table) " WHERE migration=?") (name mname)])]
       (not (= 0 (:count (first cnt)))))
-    (catch Exception e
+    (do
       (exec-stmt conn
                  (schema/create conn (schema/table migration-table
                                                    (schema/varchar :migration 255))))
@@ -67,7 +70,7 @@
   ;; 0. create transaction
   (jdbc/with-db-transaction [tx conn]
     ;; 1. Check if migration was executed  
-    (if (migration-executed? tx (:name migration))
+    (if (trace (migration-executed? tx (:name migration)))
       (do
         ;; 2. Exec rollback
         (exec-stmt tx (:down migration))

@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [clojure.java.jdbc :as jdbc]
             [migrator.core :refer :all]
-            [migrator.modifiers :as mod]
             [migrator.schema :as schema]))
 
 (deftest test-up-down
@@ -21,15 +20,6 @@
            (up ["foo"] ["bar"])
            (down ["foo"] ["bar"])))))
 
-(deftest test-defmigrations
-  (is (= (macroexpand-1 '(defmigrations foo [conn]
-                           (defmigration foo (up ["foo"]) (down ["bla"]))
-                           (defmigration foo2 (up ["foo"] ["bar"]) (down ["bla"]))))
-         '(def foo
-            (clojure.core/fn [conn]
-              (clojure.core/vector (defmigration foo (up ["foo"]) (down ["bla"]))
-                                   (defmigration foo2 (up ["foo"] ["bar"]) (down ["bla"]))))))))
-
 ;; some db test
 
 (def postgresql-spec
@@ -39,16 +29,18 @@
 (defmigrations example-migrations
   [conn]
   (defmigration user-table
-    (up (mod/create conn (schema/table :users
-                                       (schema/varchar :name 50)
-                                       (schema/varchar :email 50))))
-    (down (mod/drop conn (schema/table :users))))
+    (up (schema/create conn (schema/table :users
+                                          (schema/varchar :name 50)
+                                          (schema/varchar :email 50))))
+    (down (schema/drop conn (schema/table :users))))
   (defmigration another-table
-    (up (mod/create conn (schema/table :tbl
-                                       (schema/integer :foo))))
-    (down (mod/drop conn (schema/table :tbl)))))
+    (up (schema/create conn (schema/table :tbl
+                                          (schema/integer :foo))))
+    (down (schema/drop conn (schema/table :tbl)))))
 
 (deftest exec-examples
+  (rollback postgresql-spec example-migrations :all) ;; First clean up database
+  (jdbc/execute! postgresql-spec ["DROP TABLE migrator_migrations;"])
   (migrate postgresql-spec example-migrations)
   (is (jdbc/query postgresql-spec ["select * from users"])) ;; Should not fail
   (is (jdbc/query postgresql-spec ["select * from tbl"]))
