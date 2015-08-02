@@ -8,4 +8,10 @@
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
                  [lobos "1.0.0-beta3"]]
   :target-path "target/%s"
+  :repositories [["snapshots" {:url "https://maven.azapps.de/artifactory/mirakeldb-snapshots"
+                               :username :env
+                               :password :env}]
+                 ["releases" {:url "https://maven.azapps.de/artifactory/mirakeldb-releases"
+                              :username :env
+                              :password :env}]]
   :profiles {:uberjar {:aot :all}})
