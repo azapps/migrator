@@ -27,11 +27,6 @@
        ~args
        (vector ~@migrations))))
 
-(defn trace
-  [t]
-  (prn t)
-  t)
-
 (defn exec-stmt
   [conn stmt]
   (doall (map (partial jdbc/execute! conn) stmt)))
@@ -70,7 +65,7 @@
   ;; 0. create transaction
   (jdbc/with-db-transaction [tx conn]
     ;; 1. Check if migration was executed  
-    (if (trace (migration-executed? tx (:name migration)))
+    (if (migration-executed? tx (:name migration))
       (do
         ;; 2. Exec rollback
         (exec-stmt tx (:down migration))
