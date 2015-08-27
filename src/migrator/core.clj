@@ -1,7 +1,8 @@
 (ns migrator.core
   (:require [clojure.java.jdbc :as jdbc]
-            [lobos.analyzer :as analyzer]
+            [analytor.analyzer :as analyzer]
             [migrator.schema :as schema]))
+
 
 (def migration-table
   "migrator_migrations")
@@ -9,6 +10,7 @@
 (defn up
   [& statements]
   (fn [m] (assoc m :up (apply concat statements))))
+
 (defn down
   [& statements]
   (fn [m] (assoc m :down (apply concat statements))))
@@ -30,24 +32,10 @@
   [conn stmt]
   (doall (map (partial jdbc/execute! conn) stmt)))
 
-(defn fix-connection
-  [conn]
-  (-> conn
-      (update :subprotocol #(or % (:dbtype conn)))
-      (update :subname #(or % (str "//"
-                                   (or (:host conn) "localhost")
-                                   ":"
-                                   (or (:port conn) "5432")
-                                   "/"
-                                   (:dbname conn))))))
-
-
 (defn migration-executed?
   "Checks wether a specific migration was already executed. If no migration-db exists it will be created"
   [conn mname]
-  (if (-> (analyzer/analyze-schema conn)
-          :tables
-          (get (keyword migration-table)))    
+  (if (some #(= % (keyword migration-table)) (analyzer/analyze conn))
     (let [cnt (jdbc/query conn [(str "SELECT COUNT(*) AS count FROM " (name migration-table) " WHERE migration=?") (name mname)])]
       (not (= 0 (:count (first cnt)))))
     (do
@@ -74,7 +62,7 @@
   [conn migration]
   ;; 0. create transaction
   (jdbc/with-db-transaction [tx conn]
-    ;; 1. Check if migration was executed  
+    ;; 1. Check if migration was executed
     (if (migration-executed? tx (:name migration))
       (do
         ;; 2. Exec rollback
@@ -83,14 +71,14 @@
         (jdbc/delete! tx migration-table ["migration = ?" (name (:name migration))])
         {(:name migration) true})
       {(:name migration) false})))
+
 (defn migrate
   [conn migrations]
-  (let [conn (fix-connection conn)]
-    (doall (map (partial migrate-1 conn) (migrations conn)))))
+  (doall (map (partial migrate-1 conn) (migrations conn))))
+
 (defn rollback
   [conn migrations & [do-all?]]
-  (let [conn (fix-connection conn)
-        rollbacks (reverse (migrations conn))]
+  (let [rollbacks (reverse (migrations conn))]
     (if do-all?
       (doall (map (partial rollback-1 conn) rollbacks))
       (some (partial rollback-1 conn) rollbacks))))

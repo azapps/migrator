@@ -6,12 +6,16 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/java.jdbc "0.4.1"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
-                 [lobos "1.0.0-beta3"]]
+                 [org.clojure/tools.macro "0.1.2"]
+                 [analytor/analytor "0.1.0-SNAPSHOT"]]
   :target-path "target/%s"
-  :repositories [["snapshots" {:url "https://maven.azapps.de/artifactory/mirakeldb-snapshots"
-                               :username :env
-                               :password :env}]
-                 ["releases" {:url "https://maven.azapps.de/artifactory/mirakeldb-releases"
-                              :username :env
-                              :password :env}]]
-  :profiles {:uberjar {:aot :all}})
+  :repositories [["snapshots" {:url "https://maven.azapps.de/artifactory/mirakeldb-snapshots"}]
+                 ["releases" {:url "https://maven.azapps.de/artifactory/mirakeldb-releases"}]]
+  :profiles {:uberjar {:aot :all}
+             :dev {:dependencies
+                   [[lein-clojars "0.7.0"]
+                    [lein-marginalia "0.6.1"]
+                    [lein-multi "1.1.0"]
+                    [cljss "0.1.1"]
+                    [hiccup "0.3.1"]
+                    [com.h2database/h2 "1.3.160"]]}})
