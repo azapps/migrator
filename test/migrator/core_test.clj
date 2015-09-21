@@ -25,7 +25,7 @@
 (def postgresql-spec
   {:subprotocol "postgresql"
    :subname     "//localhost:5432/migrator"})
- 
+
 (defmigrations example-migrations
   [conn]
   (defmigration user-table

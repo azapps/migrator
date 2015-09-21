@@ -3,7 +3,6 @@
             [analytor.analyzer :as analyzer]
             [migrator.schema :as schema]))
 
-
 (def migration-table
   "migrator_migrations")
 
@@ -31,6 +30,18 @@
 (defn exec-stmt
   [conn stmt]
   (doall (map (partial jdbc/execute! conn) stmt)))
+
+(defn fix-connection
+  [conn]
+  (-> conn
+      (update :subprotocol #(or % (:dbtype conn)))
+      (update :subname #(or % (str "//"
+                                   (or (:host conn) "localhost")
+                                   ":"
+                                   (or (:port conn) "5432")
+                                   "/"
+                                   (:dbname conn))))))
+
 
 (defn migration-executed?
   "Checks wether a specific migration was already executed. If no migration-db exists it will be created"
@@ -74,11 +85,12 @@
 
 (defn migrate
   [conn migrations]
-  (doall (map (partial migrate-1 conn) (migrations conn))))
-
+  (let [conn (fix-connection conn)]
+    (doall (map (partial migrate-1 conn) (migrations conn)))))
 (defn rollback
   [conn migrations & [do-all?]]
-  (let [rollbacks (reverse (migrations conn))]
+  (let [conn (fix-connection conn)
+        rollbacks (reverse (migrations conn))]
     (if do-all?
       (doall (map (partial rollback-1 conn) rollbacks))
       (some (partial rollback-1 conn) rollbacks))))
