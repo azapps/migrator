@@ -48,7 +48,7 @@
 (defn migration-executed?
   "Checks wether a specific migration was already executed. If no migration-db exists it will be created"
   [conn mname]
-  (if (some #(= % (keyword migration-table)) (analyzer/analyze conn))
+  (if (get (analyzer/analyze conn) (keyword migration-table))
     (let [cnt (jdbc/query conn [(str "SELECT COUNT(*) AS count FROM " (name migration-table) " WHERE migration=?") (name mname)])]
       (not (= 0 (:count (first cnt)))))
     (do
@@ -89,10 +89,22 @@
   [conn migrations]
   (let [conn (fix-connection conn)]
     (doall (map (partial migrate-1 conn) (migrations conn)))))
+
+(defn take-until
+  "Returns a lazy sequence of successive items from coll until
+  (pred item) returns true, including that item. pred must be
+  free of side-effects."
+  [pred coll]
+  (lazy-seq
+   (when-let [s (seq coll)]
+     (if (pred (first s))
+       (cons (first s) nil)
+       (cons (first s) (take-until pred (rest s)))))))
+
 (defn rollback
   [conn migrations & [do-all?]]
   (let [conn (fix-connection conn)
         rollbacks (reverse (migrations conn))]
     (if do-all?
       (doall (map (partial rollback-1 conn) rollbacks))
-      (some (partial rollback-1 conn) rollbacks))))
+      (take-until (comp first vals) (map (partial rollback-1 conn) rollbacks)))))
