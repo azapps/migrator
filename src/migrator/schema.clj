@@ -34,6 +34,17 @@
                  [string :only [replace]])
         lobos.utils))
 
+
+(defn autorequire-backend
+  "Automatically require the backend for the given connection-info."
+  [connection-info]
+  (if (:subprotocol connection-info)
+    (->> connection-info
+         :subprotocol
+         (str "lobos.backends.")
+         symbol
+         require)
+    (throw (Exception. "The :subprotocol key is missing from db-spec."))))
 (ast/import-all)
 
 ;; -----------------------------------------------------------------------------
@@ -610,9 +621,8 @@
   char
   nchar
   clob
-  nclob)
-
-(def text clob)
+  nclob
+  text)
 
 (def ntext nclob)
 
@@ -762,7 +772,6 @@
 (derive Table                ::definition)
 (derive Schema               ::definition)
 
-
 (defn- compile-stmt
   [stmt]
   (map #(vector (compiler/compile %)) stmt))
@@ -774,6 +783,7 @@
 
     user> (create db-spec (table :foo (integer :a)))"
   [db-spec element]
+  (autorequire-backend db-spec)
   (compile-stmt
    (build-create-statement element db-spec)))
 
@@ -800,4 +810,3 @@
   [db-spec element & [behavior]]
   [[(compiler/compile
      (build-drop-statement element behavior db-spec))]])
-

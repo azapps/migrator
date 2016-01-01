@@ -3,6 +3,7 @@
             [analytor.analyzer :as analyzer]
             [migrator.schema :as schema]))
 
+
 (def migration-table
   "migrator_migrations")
 
@@ -33,6 +34,7 @@
 
 (defn fix-connection
   [conn]
+  (schema/autorequire-backend conn)
   (-> conn
       (update :subprotocol #(or % (:dbtype conn)))
       (update :subname #(or % (str "//"
