@@ -1,6 +1,6 @@
 (ns migrator.core
   (:require [clojure.java.jdbc :as jdbc]
-            [analytor.analyzer :as analyzer]
+            [analytor.core :as analyzer]
             [migrator.schema :as schema]))
 
 
