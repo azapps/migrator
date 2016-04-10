@@ -48,7 +48,8 @@
 (defn migration-executed?
   "Checks wether a specific migration was already executed. If no migration-db exists it will be created"
   [conn mname]
-  (if (get (analyzer/analyze conn) (keyword migration-table))
+  (if (some #(= (keyword migration-table) (first %))
+            (analyzer/analyze conn))
     (let [cnt (jdbc/query conn [(str "SELECT COUNT(*) AS count FROM " (name migration-table) " WHERE migration=?") (name mname)])]
       (not (= 0 (:count (first cnt)))))
     (do
