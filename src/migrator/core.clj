@@ -34,15 +34,17 @@
 
 (defn fix-connection
   [conn]
-  (schema/autorequire-backend conn)
-  (-> conn
-      (update :subprotocol #(or % (:dbtype conn)))
-      (update :subname #(or % (str "//"
-                                   (or (:host conn) "localhost")
-                                   ":"
-                                   (or (:port conn) "5432")
-                                   "/"
-                                   (:dbname conn))))))
+  (let [conn
+        (-> conn
+            (update :subprotocol #(or % (:dbtype conn)))
+            (update :subname #(or % (str "//"
+                                         (or (:host conn) "localhost")
+                                         ":"
+                                         (or (:port conn) "5432")
+                                         "/"
+                                         (:dbname conn)))))]
+    (schema/autorequire-backend conn)
+    conn))
 
 
 (defn migration-executed?
