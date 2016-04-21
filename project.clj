@@ -1,4 +1,4 @@
-(defproject migrator "0.1.0"
+(defproject migrator "0.1.1"
   :description "A library to handle SQL migrations"
   :url "https://github.com/azapps/migrator"
   :license {:name "Eclipse Public License"
