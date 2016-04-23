@@ -102,3 +102,30 @@
     (if do-all?
       (mapv (partial rollback-1 conn) rollbacks)
       (take-until (comp first vals) (map (partial rollback-1 conn) rollbacks)))))
+
+(defn up-to-date?
+  "Checks if the database is up to date. If accept-newer-migrations?
+  is set to truthy, it will only check if the last migration was
+  executed. Otherwise it will check if the last defined migration is
+  also the last exeecuted one"
+  [conn migrations accept-newer-migrations?]
+  (let [migration-names
+        (map
+         (comp name :name)
+         (migrations conn))
+
+        executed-migrations-names
+        (map
+         :migration
+         (jdbc/query conn [(str "select * from " migration-table)]))
+
+        max-length
+        (max (count migration-names) (count executed-migrations-names))]
+    (every?
+     #(or
+       (= (:migration %) (:exec-migration %))
+       (when accept-newer-migrations?
+         (nil? (:migration %))))
+     (map #(hash-map :migration %1 :exec-migration %2)
+          (take max-length (concat migration-names (repeat nil)))
+          (take max-length (concat executed-migrations-names (repeat nil)))))))

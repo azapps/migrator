@@ -39,8 +39,16 @@
                                           (schema/integer :foo))))
     (down (schema/drop conn (schema/table :tbl)))))
 
+(defn db-fixtures
+  [f]
+  ;; Rollback it in the beginning s.t. we can inspect the database
+  ;; after running the tests
+  (rollback postgresql-spec example-migrations :all)
+  (f))
+(use-fixtures :each db-fixtures)
+
+;; Test example walk through
 (deftest exec-examples
-  (rollback postgresql-spec example-migrations :all) ;; First clean up database
   (jdbc/execute! postgresql-spec ["DROP TABLE migrator_migrations;"])
   (migrate postgresql-spec example-migrations)
   (is (jdbc/query postgresql-spec ["select * from users"])) ;; Should not fail
@@ -53,3 +61,34 @@
   (is (thrown? Exception (jdbc/query postgresql-spec ["select * from tbl"])))
   (is (thrown? Exception (jdbc/query postgresql-spec ["select * from users"])))
   )
+
+;; Test up-to-date?
+(deftest test-up-to-date
+  (migrate postgresql-spec example-migrations)
+  (is (up-to-date? postgresql-spec example-migrations false))
+  (is (up-to-date? postgresql-spec example-migrations true)))
+
+(deftest test-up-to-date-inconsistent-migrations
+  (migrate postgresql-spec example-migrations)
+  ;; Rollback one step
+  (rollback postgresql-spec example-migrations)
+  (is (not (up-to-date? postgresql-spec example-migrations false)))
+  (is (not (up-to-date? postgresql-spec example-migrations true)))
+  ;; Inserting now a new migration should fail for both again
+  (jdbc/insert! postgresql-spec migration-table
+                {:migration "no-migration"})
+  (is (not (up-to-date? postgresql-spec example-migrations false)))
+  (is (not (up-to-date? postgresql-spec example-migrations true)))
+  (jdbc/delete! postgresql-spec migration-table
+                ["migration = ?" "no-migration"]))
+
+(deftest test-up-to-date-with-newer-migration
+  ;; migrate and insert something new depending on accept-newer the
+  ;; result should differ
+  (migrate postgresql-spec example-migrations)
+  (jdbc/insert! postgresql-spec migration-table
+                {:migration "no-migration"})
+  (is (not (up-to-date? postgresql-spec example-migrations false)))
+  (is (up-to-date? postgresql-spec example-migrations true))
+  (jdbc/delete! postgresql-spec migration-table
+                ["migration = ?" "no-migration"]))
