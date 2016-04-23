@@ -38,13 +38,13 @@
 (defn autorequire-backend
   "Automatically require the backend for the given connection-info."
   [connection-info]
-  (if (:subprotocol connection-info)
+  (if (:dbtype connection-info)
     (->> connection-info
-         :subprotocol
+         :dbtype
          (str "lobos.backends.")
          symbol
          require)
-    (throw (Exception. "The :subprotocol key is missing from db-spec."))))
+    (throw (Exception. "The :dbtype key is missing from db-spec."))))
 (ast/import-all)
 
 ;; -----------------------------------------------------------------------------

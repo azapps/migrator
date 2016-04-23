@@ -4,6 +4,12 @@
             [migrator.core :refer :all]
             [migrator.schema :as schema]))
 
+(def postgresql-spec
+  {:dbtype "postgresql"
+   :dbname "migrator"})
+
+;; test macro structure
+
 (deftest test-up-down
   (is (= {:up ["foo" "bar"]} ((up ["foo"] ["bar"]) {})))
   (is (= {:down ["foo" "bar"]} ((down ["foo"] ["bar"]) {}))))
@@ -20,12 +26,7 @@
            (up ["foo"] ["bar"])
            (down ["foo"] ["bar"])))))
 
-;; some db test
-
-(def postgresql-spec
-  {:subprotocol "postgresql"
-   :subname     "//localhost:5432/migrator"})
-
+;; "real" migrations
 (defmigrations example-migrations
   [conn]
   (defmigration user-table
