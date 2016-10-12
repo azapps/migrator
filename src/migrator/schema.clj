@@ -18,12 +18,12 @@
   element definitions. Those can be created or dropped, also the `table`
   element can be altered.
 
-  Then there's the table elements that serves to define tables. There's
-  the completly abstract `column` and `constraint` elements, which are
-  only meant to be used directly with the alter action. Each of them
-  have more specialized function to help you define tables, like the
-  `unique`, `primary-key`, `foreign-key` and `check` constraints
-  definitons and the typed data definitions."
+  Then there's the table elements that serves to define
+  tables. There's the completly abstract `column` and `constraint`
+  elements, which are only meant to be used directly with the alter
+  action. Each of them have more specialized function to help you
+  define tables, like the `unique`, `primary-key`, `foreign-key` and
+  `check` constraints definitons and the typed data definitions."
   (:refer-clojure :exclude [defonce replace
                             bigint boolean char double float time
                             alter drop])
