@@ -1,4 +1,4 @@
-(defproject migrator "0.1.3"
+(defproject migrator "0.1.4"
   :description "A library to handle SQL migrations"
   :url "https://github.com/azapps/migrator"
   :license {:name "Eclipse Public License"
@@ -7,4 +7,4 @@
                  [org.clojure/java.jdbc "0.4.1"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
                  [org.clojure/tools.macro "0.1.2"]
-                 [analytor/analytor "0.1.0"]])
+                 [analytor/analytor "0.1.1"]])
